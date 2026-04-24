@@ -1,149 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>NTMA - Network Traffic Monitoring</title>
-    <link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Network Traffic Monitor</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="app-shell">
     <nav class="navbar">
-        <div class="navbar__brand">
-            <h1 class="navbar__title">NTMA</h1>
-            <p class="navbar__subtitle">Network Traffic Monitoring & Analysis</p>
-        </div>
-
-        <div class="navbar__actions">
-            <a class="navbar__switch" href="live_capture.html">Switch to Live Mode</a>
-            <div class="navbar__links">
-                <a href="/">Home</a>
-                <a href="/about">About</a>
-                <a href="/contact">Contact</a>
-            </div>
-        </div>
+      <h1 class="title">Network Traffic Monitor</h1>
+      <button id="modeButton" class="mode-static">Switch to Live Capture</button>
     </nav>
 
-    <main class="main__content">
-        <section class="hero">
-            <div>
-                <span class="badge">Static Dataset Mode</span>
-                <h2>Monitor and analyze network traffic records</h2>
-                <p>
-                    Click Start to fetch packets from <code>/packets</code> and replay them like a live capture.
-                </p>
-            </div>
+    <section class="controls-bar">
+      <div class="capture-controls">
+        <button id="startBtn" type="button">Start</button>
+        <button id="stopBtn" type="button">Stop</button>
+      </div>
 
-            <div class="hero__status">
-                <div class="status__dot" id="statusDot"></div>
-                <span id="monitorStatus">Monitoring stopped</span>
-            </div>
-        </section>
+      <div class="filters-bar">
+        <select id="protocolFilter">
+          <option value="">All Protocols</option>
+        </select>
+        <input id="sourceIpFilter" type="text" placeholder="Source IP">
+        <input id="destinationIpFilter" type="text" placeholder="Destination IP">
+        <button id="applyFilterBtn" type="button">Filter</button>
+        <button id="resetFilterBtn" type="button">Reset / Clear Filter</button>
+      </div>
+    </section>
 
-        <section class="stats__grid">
-            <div class="stat__card">
-                <h3>Total Packets</h3>
-                <p id="totalPackets">0</p>
-            </div>
-            <div class="stat__card">
-                <h3>TCP Packets</h3>
-                <p id="tcpPackets">0</p>
-            </div>
-            <div class="stat__card">
-                <h3>UDP Packets</h3>
-                <p id="udpPackets">0</p>
-            </div>
-            <div class="stat__card">
-                <h3>Avg Packet Size</h3>
-                <p id="avgPacketSize">0 B</p>
-            </div>
-        </section>
+    <section class="table-section">
+      <table>
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Source</th>
+            <th>Destination</th>
+            <th>Protocol</th>
+          </tr>
+        </thead>
+        <tbody id="packetTableBody"></tbody>
+      </table>
+    </section>
 
-        <section class="panel">
-            <div class="panel__header">
-                <h2>Controls</h2>
-            </div>
+    <section class="bottom-row">
+      <div class="detail-panel">
+        <h2>Packet Details</h2>
+        <textarea id="packetDetail" readonly></textarea>
+      </div>
 
-            <div class="controls__container">
-                <button id="startButton" class="control__button control__button--start">Start</button>
-                <button id="stopButton" class="control__button control__button--stop">Stop</button>
-                <button id="resetButton" class="control__button control__button--reset">Reset Filters</button>
-            </div>
-        </section>
+      <aside class="stats-panel">
+        <div class="stat-card">
+          <h3>Total Packets</h3>
+          <p id="totalPackets">0</p>
+        </div>
+        <div class="stat-card">
+          <h3>Average Packet Size</h3>
+          <p id="averagePacketSize">0.00</p>
+        </div>
+        <div class="stat-card full-width">
+          <h3>Packets Per Protocol</h3>
+          <div id="protocolStats"></div>
+        </div>
+      </aside>
+    </section>
+  </div>
 
-        <section class="panel">
-            <div class="panel__header">
-                <h2>Filters</h2>
-            </div>
-
-            <div class="filters__container">
-                <div class="filter__group">
-                    <label for="filterProtocol">Protocol</label>
-                    <select id="filterProtocol" class="filter__input">
-                        <option value="all">All</option>
-                        <option value="TCP">TCP</option>
-                        <option value="UDP">UDP</option>
-                        <option value="ICMP">ICMP</option>
-                    </select>
-                </div>
-
-                <div class="filter__group">
-                    <label for="sourceIp">Source IP</label>
-                    <input id="sourceIp" class="filter__input" type="text" placeholder="e.g. 192.168.1.5" />
-                </div>
-
-                <div class="filter__group">
-                    <label for="destinationIp">Destination IP</label>
-                    <input id="destinationIp" class="filter__input" type="text" placeholder="e.g. 8.8.8.8" />
-                </div>
-
-                <div class="filter__group filter__group--button">
-                    <label>&nbsp;</label>
-                    <button id="filterButton" class="control__button control__button--filter">Apply Filter</button>
-                </div>
-            </div>
-        </section>
-
-        <section class="grid__layout">
-            <section class="panel panel--table">
-                <div class="panel__header">
-                    <h2>Traffic Records</h2>
-                </div>
-
-                <div class="table__wrapper">
-                    <table class="traffic__table">
-                        <thead>
-                            <tr>
-                                <th>Time</th>
-                                <th>Source IP</th>
-                                <th>Destination IP</th>
-                                <th>Protocol</th>
-                                <th>Src Port</th>
-                                <th>Dst Port</th>
-                                <th>Service</th>
-                                <th>Packet Size</th>
-                            </tr>
-                        </thead>
-                        <tbody id="trafficTableBody">
-                            <tr>
-                                <td colspan="8" class="empty__state">
-                                    Press <strong>Start</strong> to fetch packets from <code>/packets</code>.
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <section class="panel panel--logs">
-                <div class="panel__header">
-                    <h2>Logs</h2>
-                </div>
-
-                <div class="logs__container" id="logsContainer"></div>
-            </section>
-        </section>
-    </main>
-
-    <script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
