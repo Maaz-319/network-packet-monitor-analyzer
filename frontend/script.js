@@ -1,370 +1,339 @@
 const state = {
-    loadedPackets: [],
-    filteredPackets: [],
-    displayedPackets: [],
-    isRunning: false,
-    currentIndex: 0,
-    playbackTimer: null,
-    fetchController: null,
-    runId: 0,
-    filters: {
-        protocol: "all",
-        source: "",
-        destination: ""
-    }
+  mode: "static",
+  running: false,
+  packets: [],
+  filteredPackets: [],
+  selectedPacket: null,
+  liveOffset: 0,
+  pollTimer: null,
+  loadingLive: false,
+  filters: {
+    protocol: "",
+    source: "",
+    destination: "",
+  },
 };
 
-const trafficTableBody = document.getElementById("trafficTableBody");
-const logsContainer = document.getElementById("logsContainer");
-
-const totalPackets = document.getElementById("totalPackets");
-const tcpPackets = document.getElementById("tcpPackets");
-const udpPackets = document.getElementById("udpPackets");
-const avgPacketSize = document.getElementById("avgPacketSize");
-
-const startButton = document.getElementById("startButton");
-const stopButton = document.getElementById("stopButton");
-const resetButton = document.getElementById("resetButton");
-const filterButton = document.getElementById("filterButton");
-
-const filterProtocol = document.getElementById("filterProtocol");
-const sourceIp = document.getElementById("sourceIp");
-const destinationIp = document.getElementById("destinationIp");
-
-const monitorStatus = document.getElementById("monitorStatus");
-const statusDot = document.getElementById("statusDot");
+const elements = {
+  startBtn: document.getElementById("startBtn"),
+  stopBtn: document.getElementById("stopBtn"),
+  modeButton: document.getElementById("modeButton"),
+  protocolFilter: document.getElementById("protocolFilter"),
+  sourceIpFilter: document.getElementById("sourceIpFilter"),
+  destinationIpFilter: document.getElementById("destinationIpFilter"),
+  applyFilterBtn: document.getElementById("applyFilterBtn"),
+  resetFilterBtn: document.getElementById("resetFilterBtn"),
+  packetTableBody: document.getElementById("packetTableBody"),
+  packetDetail: document.getElementById("packetDetail"),
+  totalPackets: document.getElementById("totalPackets"),
+  averagePacketSize: document.getElementById("averagePacketSize"),
+  protocolStats: document.getElementById("protocolStats"),
+};
 
 function normalizePacket(packet) {
-    return {
-        time: packet.Time ?? packet.time ?? "--",
-        srcIp: packet.Source ?? packet.source ?? "",
-        dstIp: packet.Destination ?? packet.destination ?? "",
-        protocol: String(packet.Protocol ?? packet.protocol ?? "").toUpperCase(),
-        length: Number(packet.Length ?? packet.length ?? 0),
-        srcPort: packet.Src_Port ?? packet.src_port ?? packet.srcPort ?? "-",
-        dstPort: packet.Dst_Port ?? packet.dst_port ?? packet.dstPort ?? "-",
-        size: Number(packet.Size ?? packet.size ?? packet.Length ?? packet.length ?? 0)
-    };
+  return {
+    Time: packet.Time ?? packet.time ?? "-",
+    Source: packet.Source ?? packet.source ?? "-",
+    Destination: packet.Destination ?? packet.destination ?? "-",
+    Protocol: String(packet.Protocol ?? packet.protocol ?? "").toUpperCase() || "UNKNOWN",
+    Length: Number(packet.Length ?? packet.length ?? 0),
+    Src_Port: packet.Src_Port ?? packet.src_port ?? packet.srcPort ?? null,
+    Dst_Port: packet.Dst_Port ?? packet.dst_port ?? packet.dstPort ?? null,
+    Size: Number(packet.Size ?? packet.size ?? packet.Length ?? packet.length ?? 0),
+  };
 }
 
-function setRunningUI(running) {
-    if (running) {
-        monitorStatus.textContent = "Monitoring started";
-        statusDot.style.background = "#4ade80";
-        statusDot.style.boxShadow = "0 0 0 4px rgba(74, 222, 128, 0.15)";
-    } else {
-        monitorStatus.textContent = "Monitoring stopped";
-        statusDot.style.background = "#f87171";
-        statusDot.style.boxShadow = "0 0 0 4px rgba(248, 113, 113, 0.15)";
-    }
+function setButtonState() {
+  elements.startBtn.disabled = state.running;
+  elements.stopBtn.disabled = !state.running;
 }
 
-function addLog(message, type = "normal") {
-    const log = document.createElement("div");
-    log.className = "log__item";
+function setDetail(packet) {
+  if (!packet) {
+    elements.packetDetail.value = "Select a packet row to view full details.";
+    return;
+  }
 
-    const now = new Date();
-    const timeString = now.toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit"
-    });
+  elements.packetDetail.value = JSON.stringify(packet, null, 2);
+}
 
-    log.innerHTML = `
-        <span class="log__time">${timeString}</span>
-        <p class="log__message log__message--${type}">${message}</p>
+function renderTable() {
+  const rows = state.filteredPackets;
+  elements.packetTableBody.innerHTML = "";
+
+  if (!rows.length) {
+    const row = document.createElement("tr");
+    row.innerHTML = '<td colspan="4">No packets available.</td>';
+    elements.packetTableBody.appendChild(row);
+    setDetail(null);
+    return;
+  }
+
+  rows.forEach((packet) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${packet.Time}</td>
+      <td>${packet.Source}</td>
+      <td>${packet.Destination}</td>
+      <td>${packet.Protocol}</td>
     `;
-
-    logsContainer.prepend(log);
-}
-
-function renderTable(rows) {
-    trafficTableBody.innerHTML = "";
-
-    if (!rows.length) {
-        trafficTableBody.innerHTML = `
-            <tr>
-                <td colspan="8" class="empty__state">No packets to display.</td>
-            </tr>
-        `;
-        return;
-    }
-
-    rows.forEach((row) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-            <td>${row.time}</td>
-            <td>${row.srcIp}</td>
-            <td>${row.dstIp}</td>
-            <td>${row.protocol}</td>
-            <td>${row.srcPort}</td>
-            <td>${row.dstPort}</td>
-            <td>${row.length}</td>
-            <td>${row.size} B</td>
-        `;
-        trafficTableBody.appendChild(tr);
+    row.addEventListener("click", () => {
+      state.selectedPacket = packet;
+      setDetail(packet);
     });
+    elements.packetTableBody.appendChild(row);
+  });
 }
 
-function appendRow(row) {
-    const emptyState = trafficTableBody.querySelector(".empty__state");
-    if (emptyState) trafficTableBody.innerHTML = "";
+function renderStats() {
+  const packets = state.filteredPackets;
+  const protocolCounts = {};
+  let sizeTotal = 0;
 
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-        <td>${row.time}</td>
-        <td>${row.srcIp}</td>
-        <td>${row.dstIp}</td>
-        <td>${row.protocol}</td>
-        <td>${row.srcPort}</td>
-        <td>${row.dstPort}</td>
-        <td>${row.length}</td>
-        <td>${row.size} B</td>
-    `;
-    trafficTableBody.appendChild(tr);
+  packets.forEach((packet) => {
+    const protocol = packet.Protocol || "UNKNOWN";
+    protocolCounts[protocol] = (protocolCounts[protocol] || 0) + 1;
+    sizeTotal += Number(packet.Size) || 0;
+  });
+
+  elements.totalPackets.textContent = String(packets.length);
+  elements.averagePacketSize.textContent = packets.length ? (sizeTotal / packets.length).toFixed(2) : "0.00";
+
+  elements.protocolStats.innerHTML = "";
+  const protocols = Object.keys(protocolCounts);
+
+  if (!protocols.length) {
+    elements.protocolStats.textContent = "No protocol data.";
+    return;
+  }
+
+  protocols.forEach((protocol) => {
+    const entry = document.createElement("div");
+    entry.className = "protocol-row";
+    entry.innerHTML = `<span>${protocol}</span><span>${protocolCounts[protocol]}</span>`;
+    elements.protocolStats.appendChild(entry);
+  });
 }
 
-function renderStats(rows) {
-    const total = rows.length;
-    const tcp = rows.filter((item) => item.protocol === "TCP").length;
-    const udp = rows.filter((item) => item.protocol === "UDP").length;
-    const avg = total
-        ? Math.round(rows.reduce((sum, item) => sum + item.size, 0) / total)
-        : 0;
+function getFilteredPackets() {
+  const protocol = state.filters.protocol.trim().toLowerCase();
+  const source = state.filters.source.trim().toLowerCase();
+  const destination = state.filters.destination.trim().toLowerCase();
 
-    totalPackets.textContent = total;
-    tcpPackets.textContent = tcp;
-    udpPackets.textContent = udp;
-    avgPacketSize.textContent = `${avg} B`;
+  return state.packets.filter((packet) => {
+    const protocolMatch = !protocol || String(packet.Protocol || "").toLowerCase() === protocol;
+    const sourceMatch = !source || String(packet.Source || "").toLowerCase().includes(source);
+    const destinationMatch = !destination || String(packet.Destination || "").toLowerCase().includes(destination);
+    return protocolMatch && sourceMatch && destinationMatch;
+  });
+}
+
+function applyCurrentFilters() {
+  state.filteredPackets = getFilteredPackets();
+  renderTable();
+  renderStats();
+}
+
+function updateProtocolOptions() {
+  const current = elements.protocolFilter.value;
+  const protocols = new Set(state.packets.map((packet) => packet.Protocol).filter(Boolean));
+
+  elements.protocolFilter.innerHTML = '<option value="">All Protocols</option>';
+  protocols.forEach((protocol) => {
+    const option = document.createElement("option");
+    option.value = protocol;
+    option.textContent = protocol;
+    elements.protocolFilter.appendChild(option);
+  });
+
+  if ([...protocols].includes(current)) {
+    elements.protocolFilter.value = current;
+  }
 }
 
 function readFilters() {
-    return {
-        protocol: filterProtocol.value,
-        source: sourceIp.value.trim().toLowerCase(),
-        destination: destinationIp.value.trim().toLowerCase()
-    };
+  state.filters = {
+    protocol: elements.protocolFilter.value,
+    source: elements.sourceIpFilter.value,
+    destination: elements.destinationIpFilter.value,
+  };
 }
 
-function applyFilterToPackets(packets) {
-    const filters = state.filters;
-
-    return packets.filter((packet) => {
-        const protocolMatch =
-            filters.protocol === "all" || packet.protocol === filters.protocol;
-
-        const sourceMatch =
-            filters.source === "" ||
-            String(packet.srcIp).toLowerCase().includes(filters.source);
-
-        const destinationMatch =
-            filters.destination === "" ||
-            String(packet.dstIp).toLowerCase().includes(filters.destination);
-
-        return protocolMatch && sourceMatch && destinationMatch;
-    });
+async function fetchStaticPackets() {
+  const response = await fetch("http://localhost:8000/static");
+  if (!response.ok) {
+    throw new Error(`Static fetch failed with ${response.status}`);
+  }
+  return response.json();
 }
 
-function stopPlayback({ quiet = false } = {}) {
-    state.runId += 1;
-    state.isRunning = false;
+async function startStaticCapture() {
+  state.running = true;
+  setButtonState();
 
-    if (state.playbackTimer) {
-        clearInterval(state.playbackTimer);
-        state.playbackTimer = null;
-    }
+  try {
+    const data = await fetchStaticPackets();
+    state.packets = Array.isArray(data) ? data.map(normalizePacket) : [];
+    state.selectedPacket = null;
+    updateProtocolOptions();
+    readFilters();
+    applyCurrentFilters();
+    setDetail(null);
+  } catch (error) {
+    console.error("Failed to fetch static packets:", error);
+    state.packets = [];
+    state.filteredPackets = [];
+    state.selectedPacket = null;
+    renderTable();
+    renderStats();
+    setDetail(null);
+  }
 
-    if (state.fetchController) {
-        state.fetchController.abort();
-        state.fetchController = null;
-    }
-
-    setRunningUI(false);
-
-    if (!quiet) {
-        addLog("Monitoring stopped.", "error");
-    }
+  state.running = false;
+  setButtonState();
 }
 
-function startPlaybackLoop(runId) {
-    state.currentIndex = 0;
-    state.displayedPackets = [];
-    renderTable([]);
-    renderStats([]);
-
-    state.playbackTimer = setInterval(() => {
-        if (!state.isRunning || runId !== state.runId) {
-            clearInterval(state.playbackTimer);
-            state.playbackTimer = null;
-            return;
-        }
-
-        if (state.currentIndex >= state.filteredPackets.length) {
-            clearInterval(state.playbackTimer);
-            state.playbackTimer = null;
-            state.isRunning = false;
-            setRunningUI(false);
-
-            addLog(
-                `Packet playback finished. ${state.filteredPackets.length} packet(s) displayed.`,
-                "success"
-            );
-            return;
-        }
-
-        const packet = state.filteredPackets[state.currentIndex++];
-        state.displayedPackets.push(packet);
-        appendRow(packet);
-        renderStats(state.displayedPackets);
-    }, 500);
+async function startLiveBackend() {
+  const response = await fetch("http://localhost:8000/start");
+  if (!response.ok) {
+    throw new Error(`Live start failed with ${response.status}`);
+  }
 }
 
-async function startMonitoring() {
-    if (state.isRunning) {
-        addLog("Monitoring is already running.", "warning");
-        return;
+async function stopLiveBackend() {
+  await fetch("http://localhost:8000/stop");
+}
+
+function stopLivePolling() {
+  if (state.pollTimer) {
+    clearInterval(state.pollTimer);
+    state.pollTimer = null;
+  }
+  state.loadingLive = false;
+}
+
+async function pollLivePackets() {
+  if (state.loadingLive) {
+    return;
+  }
+
+  state.loadingLive = true;
+
+  try {
+    const response = await fetch(`http://localhost:8000/live?offset=${state.liveOffset}`);
+    if (!response.ok) {
+      throw new Error(`Live fetch failed with ${response.status}`);
     }
 
-    stopPlayback({ quiet: true });
+    const payload = await response.json();
+    const newPackets = Array.isArray(payload.data) ? payload.data.map(normalizePacket) : [];
 
-    state.isRunning = true;
-    state.runId += 1;
-    const runId = state.runId;
+    if (newPackets.length) {
+      state.packets.push(...newPackets);
+      state.liveOffset = typeof payload.next_offset === "number" ? payload.next_offset : state.packets.length;
+      updateProtocolOptions();
+      applyCurrentFilters();
+    }
+  } catch (error) {
+    console.error("Failed to load live packets:", error);
+    stopCapture(true);
+  } finally {
+    state.loadingLive = false;
+  }
+}
 
-    setRunningUI(true);
-    addLog("Fetching packets from /static ...", "success");
+async function startLiveCapture() {
+  state.running = true;
+  setButtonState();
 
-    state.fetchController = new AbortController();
+  try {
+    await startLiveBackend();
+    state.packets = [];
+    state.filteredPackets = [];
+    state.selectedPacket = null;
+    state.liveOffset = 0;
+    updateProtocolOptions();
+    renderTable();
+    renderStats();
+    setDetail(null);
 
-    const staticUrl = "http://localhost:8000/static";
+    await pollLivePackets();
+    stopLivePolling();
+    state.pollTimer = setInterval(pollLivePackets, 1000);
+  } catch (error) {
+    console.error("Failed to start live capture:", error);
+    stopCapture(true);
+  }
+}
 
+async function stopCapture(silent = false) {
+  state.running = false;
+  setButtonState();
+
+  if (state.mode === "live") {
+    stopLivePolling();
     try {
-        const response = await fetch(staticUrl, {
-            method: "GET",
-            headers: {
-                "Accept": "application/json"
-            },
-            signal: state.fetchController.signal
-        });
-
-        if (!response.ok) {
-            throw new Error(`Server returned ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        if (runId !== state.runId || !state.isRunning) {
-            return;
-        }
-
-        state.loadedPackets = Array.isArray(data) ? data.map(normalizePacket) : [];
-        state.filteredPackets = applyFilterToPackets(state.loadedPackets);
-
-        addLog(`Fetched ${state.loadedPackets.length} packet(s) from backend.`, "success");
-
-        if (!state.filteredPackets.length) {
-            state.isRunning = false;
-            setRunningUI(false);
-            renderTable([]);
-            renderStats([]);
-            addLog("No packets matched the current filters.", "warning");
-            return;
-        }
-
-        startPlaybackLoop(runId);
+      await stopLiveBackend();
     } catch (error) {
-        if (error.name === "AbortError") return;
-
-        state.isRunning = false;
-        setRunningUI(false);
-        renderTable([]);
-        renderStats([]);
-        addLog(`Failed to fetch packets: ${error.message}`, "error");
-    } finally {
-        state.fetchController = null;
+      console.error("Failed to stop live capture:", error);
     }
+  }
+
+  if (!silent) {
+    state.selectedPacket = null;
+  }
 }
 
-function applyFilters() {
-    state.filters = readFilters();
+function handleStart() {
+  if (state.running) {
+    return;
+  }
 
-    if (state.loadedPackets.length === 0) {
-        addLog("Filters saved. They will apply after Start.", "warning");
-        return;
-    }
+  if (state.mode === "live") {
+    startLiveCapture();
+    return;
+  }
 
-    const wasRunning = state.isRunning;
-
-    if (wasRunning) {
-        stopPlayback({ quiet: true });
-    }
-
-    state.filteredPackets = applyFilterToPackets(state.loadedPackets);
-    state.displayedPackets = [];
-
-    if (!state.filteredPackets.length) {
-        renderTable([]);
-        renderStats([]);
-        addLog("No packets matched the selected filters.", "warning");
-        return;
-    }
-
-    if (wasRunning) {
-        state.isRunning = true;
-        state.runId += 1;
-        const runId = state.runId;
-        setRunningUI(true);
-        addLog(`Filter applied. Replaying ${state.filteredPackets.length} packet(s).`, "success");
-        startPlaybackLoop(runId);
-    } else {
-        renderTable(state.filteredPackets);
-        renderStats(state.filteredPackets);
-        addLog(
-            `Filter applied. ${state.filteredPackets.length} packet(s) matched.`,
-            "success"
-        );
-    }
+  startStaticCapture();
 }
 
-function resetFilters() {
-    filterProtocol.value = "all";
-    sourceIp.value = "";
-    destinationIp.value = "";
-
-    state.filters = readFilters();
-
-    if (state.loadedPackets.length > 0) {
-        state.filteredPackets = applyFilterToPackets(state.loadedPackets);
-
-        if (state.isRunning) {
-            stopPlayback({ quiet: true });
-            state.isRunning = true;
-            state.runId += 1;
-            const runId = state.runId;
-            setRunningUI(true);
-            addLog("Filters reset. Replaying full packet list.", "warning");
-            startPlaybackLoop(runId);
-            return;
-        }
-
-        renderTable(state.filteredPackets);
-        renderStats(state.filteredPackets);
-    } else {
-        renderTable([]);
-        renderStats([]);
-    }
-
-    addLog("Filters cleared.", "warning");
+function handleStop() {
+  stopCapture();
 }
 
-startButton.addEventListener("click", startMonitoring);
-stopButton.addEventListener("click", () => stopPlayback());
-filterButton.addEventListener("click", applyFilters);
-resetButton.addEventListener("click", resetFilters);
+function handleApplyFilter() {
+  readFilters();
+  applyCurrentFilters();
+  setDetail(state.selectedPacket);
+}
 
-document.addEventListener("DOMContentLoaded", () => {
-    setRunningUI(false);
-    renderTable([]);
-    renderStats([]);
-    addLog("Ready. Press Start to load packets from /static.", "success");
-});
+function handleResetFilter() {
+  elements.protocolFilter.value = "";
+  elements.sourceIpFilter.value = "";
+  elements.destinationIpFilter.value = "";
+  readFilters();
+  applyCurrentFilters();
+  state.selectedPacket = null;
+  setDetail(null);
+}
+
+function toggleMode() {
+  if (state.running) {
+    stopCapture(true);
+  }
+
+  state.mode = state.mode === "static" ? "live" : "static";
+  elements.modeButton.textContent = state.mode === "static" ? "Switch to Live Capture" : "Switch to Static Capture";
+  elements.modeButton.className = state.mode === "static" ? "mode-static" : "mode-live";
+}
+
+elements.startBtn.addEventListener("click", handleStart);
+elements.stopBtn.addEventListener("click", handleStop);
+elements.applyFilterBtn.addEventListener("click", handleApplyFilter);
+elements.resetFilterBtn.addEventListener("click", handleResetFilter);
+elements.modeButton.addEventListener("click", toggleMode);
+
+setButtonState();
+renderTable();
+renderStats();
+setDetail(null);
