@@ -1,4 +1,4 @@
-from scapy.all import sniff, IP, TCP, UDP
+from scapy.all import sniff, IP, TCP, UDP, ICMP
 import time
 
 captured_data = []
@@ -22,6 +22,10 @@ def process_packet(packet):
         proto = "UDP"
         src_port = packet[UDP].sport
         dst_port = packet[UDP].dport
+    elif packet.haslayer(ICMP):
+        proto = "ICMP"
+        src_port = None
+        dst_port = None
 
     data = {
         "Time": round(time.time(), 2),
