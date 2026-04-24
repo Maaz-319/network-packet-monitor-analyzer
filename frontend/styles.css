@@ -1,0 +1,214 @@
+:root {
+    --bg: #0f1412;
+    --panel: #161d1a;
+    --panel-2: #1d2722;
+    --text: #e7f2eb;
+    --muted: #9db4a7;
+    --accent: #76d39b;
+    --accent-strong: #9ef7bc;
+    --border: #2c3a33;
+    --table-row: #131a17;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Manrope, "Segoe UI", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+.app-shell {
+    width: 1200px;
+    margin: 20px auto;
+}
+
+.navbar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    margin-bottom: 12px;
+}
+
+.title {
+    margin: 0;
+    font-size: 20px;
+    color: var(--accent-strong);
+}
+
+.mode-static {
+    background: var(--accent);
+    border: none;
+    color: var(--panel);
+}
+
+.mode-live {
+    background: var(--panel-2);
+    border: none;
+    color: var(--accent);
+}
+
+.controls-bar {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+}
+
+.capture-controls,
+.filters-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.filters-bar {
+    flex: 1;
+}
+
+button,
+select,
+input,
+textarea {
+    border: 1px solid var(--border);
+    background: var(--panel-2);
+    color: var(--text);
+    font: inherit;
+}
+
+button {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+button:hover {
+    border-color: var(--accent);
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+select,
+input {
+    padding: 8px 10px;
+}
+
+input {
+    width: 170px;
+}
+
+.table-section {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 10px;
+    margin-bottom: 12px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th,
+td {
+    border: 1px solid var(--border);
+    padding: 9px;
+    text-align: left;
+}
+
+th {
+    background: var(--panel-2);
+    color: var(--accent-strong);
+}
+
+tbody tr {
+    background: var(--table-row);
+}
+
+tbody tr:hover {
+    background: var(--panel-2);
+}
+
+.bottom-row {
+    display: flex;
+    gap: 12px;
+    position: sticky;
+    bottom: 0;
+    background-color: var(--bg);
+    border-top: 3px solid var(--border);
+}
+
+.detail-panel {
+    flex: 2;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 12px;
+}
+
+.detail-panel h2 {
+    margin: 0 0 10px;
+    font-size: 16px;
+    color: var(--accent-strong);
+}
+
+#packetDetail {
+    width: 100%;
+    height: 220px;
+    resize: none;
+    padding: 10px;
+    line-height: 1.4;
+}
+
+.stats-panel {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.stat-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 12px;
+    min-height: 105px;
+}
+
+.stat-card h3 {
+    margin: 0 0 8px;
+    font-size: 14px;
+    color: var(--accent-strong);
+}
+
+.stat-card p {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.full-width {
+    grid-column: 1 / span 2;
+}
+
+#protocolStats {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    color: var(--muted);
+}
+
+.protocol-row {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text);
+}
