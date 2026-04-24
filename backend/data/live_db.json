@@ -1,0 +1,102 @@
+[
+  {
+    "Time": 1777043292.04,
+    "Source": "192.168.100.28",
+    "Destination": "52.182.143.213",
+    "Protocol": "TCP",
+    "Length": 2001,
+    "Src_Port": 50608,
+    "Dst_Port": 443,
+    "Size": 2001
+  },
+  {
+    "Time": 1777043292.31,
+    "Source": "192.168.100.28",
+    "Destination": "13.89.179.13",
+    "Protocol": "TCP",
+    "Length": 181,
+    "Src_Port": 57796,
+    "Dst_Port": 443,
+    "Size": 181
+  },
+  {
+    "Time": 1777043292.31,
+    "Source": "192.168.100.28",
+    "Destination": "13.89.179.13",
+    "Protocol": "TCP",
+    "Length": 2638,
+    "Src_Port": 57796,
+    "Dst_Port": 443,
+    "Size": 2638
+  },
+  {
+    "Time": 1777043292.3040578,
+    "Source": "5c:b4:7e:e5:e0:75",
+    "Destination": "20:ab:48:3d:c1:7f",
+    "Protocol": 17,
+    "Length": null,
+    "Src Port": 44813,
+    "Dst Port": 53,
+    "Size": 116
+  },
+  {
+    "Time": 1777043292.31,
+    "Source": "52.182.143.213",
+    "Destination": "192.168.100.28",
+    "Protocol": "TCP",
+    "Length": 66,
+    "Src_Port": 443,
+    "Dst_Port": 50608,
+    "Size": 66
+  },
+  {
+    "Time": 1777043292.31,
+    "Source": "52.182.143.213",
+    "Destination": "192.168.100.28",
+    "Protocol": "TCP",
+    "Length": 169,
+    "Src_Port": 443,
+    "Dst_Port": 50608,
+    "Size": 169
+  },
+  {
+    "Time": 1777043292.31,
+    "Source": "52.182.143.213",
+    "Destination": "192.168.100.28",
+    "Protocol": "TCP",
+    "Length": 531,
+    "Src_Port": 443,
+    "Dst_Port": 50608,
+    "Size": 531
+  },
+  {
+    "Time": 1777043292.31,
+    "Source": "192.168.100.28",
+    "Destination": "52.182.143.213",
+    "Protocol": "TCP",
+    "Length": 66,
+    "Src_Port": 50608,
+    "Dst_Port": 443,
+    "Size": 66
+  },
+  {
+    "Time": 1777043292.31,
+    "Source": "192.168.100.28",
+    "Destination": "52.182.143.213",
+    "Protocol": "TCP",
+    "Length": 90,
+    "Src_Port": 50608,
+    "Dst_Port": 443,
+    "Size": 90
+  },
+  {
+    "Time": 1777043292.31,
+    "Source": "192.168.100.28",
+    "Destination": "52.182.143.213",
+    "Protocol": "TCP",
+    "Length": 66,
+    "Src_Port": 50608,
+    "Dst_Port": 443,
+    "Size": 66
+  }
+]
