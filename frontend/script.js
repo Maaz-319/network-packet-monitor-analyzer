@@ -14,6 +14,16 @@ const state = {
   },
 };
 
+const PortMapping = {
+  "80": "HTTP",
+  "443": "HTTPS",
+  "53": "DNS",
+  "22": "SSH",
+  "25": "SMTP",
+  "110": "POP3",
+  "143": "IMAP",
+};
+
 const elements = {
   startBtn: document.getElementById("startBtn"),
   stopBtn: document.getElementById("stopBtn"),
@@ -54,7 +64,16 @@ function setDetail(packet) {
     return;
   }
 
-  elements.packetDetail.value = JSON.stringify(packet, null, 2);
+  elements.packetDetail.value = "";
+  elements.packetDetail.value += `Service: ${PortMapping[packet.Src_Port] || PortMapping[packet.Dst_Port] || "Unknown"}\n`;
+  elements.packetDetail.value += `Time: ${packet.Time}\n`;
+  elements.packetDetail.value += `Source: ${packet.Source}\n`;
+  elements.packetDetail.value += `Destination: ${packet.Destination}\n`;
+  elements.packetDetail.value += `Protocol: ${packet.Protocol}\n`;
+  elements.packetDetail.value += `Length: ${packet.Length}\n`;
+  elements.packetDetail.value += `Size: ${packet.Size}\n`;
+  elements.packetDetail.value += `Source Port: ${packet.Src_Port ?? "N/A"}\n`;
+  elements.packetDetail.value += `Destination Port: ${packet.Dst_Port ?? "N/A"}\n`;
 }
 
 function renderTable() {
