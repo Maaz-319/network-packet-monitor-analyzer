@@ -42,11 +42,7 @@ const elements = {
 
 function normalizePacket(packet) {
   return {
-    ID: packet.ID ?? packet.id ?? null,
-    IPV: packet.IPV ?? packet.ipv ?? null,
     Time: packet.Time ?? packet.time ?? "-",
-    TTL: packet.TTL ?? packet.ttl ?? null,
-    Checksum: packet.Checksum ?? packet.checksum ?? null,
     Source: packet.Source ?? packet.source ?? "-",
     Destination: packet.Destination ?? packet.destination ?? "-",
     Protocol: String(packet.Protocol ?? packet.protocol ?? "").toUpperCase() || "UNKNOWN",
@@ -69,18 +65,13 @@ function setDetail(packet) {
   }
 
   elements.packetDetail.value = "";
-  elements.packetDetail.value += `Packet ID: ${packet.ID ?? "N/A"}\n`;
-  elements.packetDetail.value += `-----------------------------------------------------\n`;
-  elements.packetDetail.value += `Internet Protocol Version: ${packet.IPV ?? "N/A"}\n`;
   elements.packetDetail.value += `Service: ${PortMapping[packet.Src_Port] || PortMapping[packet.Dst_Port] || "Unknown"}\n`;
-  elements.packetDetail.value += `TTL: ${packet.TTL ?? "N/A"}\n`;
-  elements.packetDetail.value += `[ Checksum Value: ${packet.Checksum ?? "N/A"} ]\n`;
   elements.packetDetail.value += `Time: ${packet.Time}\n`;
   elements.packetDetail.value += `Source: ${packet.Source}\n`;
   elements.packetDetail.value += `Destination: ${packet.Destination}\n`;
   elements.packetDetail.value += `Protocol: ${packet.Protocol}\n`;
   elements.packetDetail.value += `Length: ${packet.Length}\n`;
-  elements.packetDetail.value += `Size: ${packet.Size} bytes\n`;
+  elements.packetDetail.value += `Size: ${packet.Size}\n`;
   elements.packetDetail.value += `Source Port: ${packet.Src_Port ?? "N/A"}\n`;
   elements.packetDetail.value += `Destination Port: ${packet.Dst_Port ?? "N/A"}\n`;
 }
