@@ -33,7 +33,7 @@ def process_packet(packet):
 
     data = {
         "ID": packet[IP].id,
-        "IP_Version": packet[IP].version,
+        "IPV": packet[IP].version,
         "Time": round(packet.time - start_time, 2) if start_time else 0,
         "Source": packet[IP].src,
         "Destination": packet[IP].dst,
@@ -55,13 +55,13 @@ def stop_filter(packet):
 
 
 def start_sniffing():
-    global capturing
+    global capturing, captured_data, start_time
+    start_time = None
+    captured_data.clear()
     capturing = True
     sniff(filter="ip", prn=process_packet, stop_filter=stop_filter)
 
 
 def stop_sniffing():
     global capturing, start_time
-    captured_data.clear()
-    start_time = None
     capturing = False
