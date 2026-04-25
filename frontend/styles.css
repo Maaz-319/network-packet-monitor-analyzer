@@ -168,6 +168,10 @@ tbody tr:hover {
     resize: none;
     padding: 10px;
     line-height: 1.4;
+
+    &:focus-within {
+        outline: none;
+    }
 }
 
 .stats-panel {
