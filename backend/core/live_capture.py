@@ -1,11 +1,12 @@
 from scapy.all import sniff, IP, TCP, UDP, ICMP
-import time
+import datetime
 
 captured_data = []
 capturing = False
+start_time = None
 
 def process_packet(packet):
-    global captured_data
+    global captured_data, start_time
 
     if not packet.haslayer(IP):
         return
@@ -27,15 +28,22 @@ def process_packet(packet):
         src_port = None
         dst_port = None
 
+    if start_time is None:
+        start_time = packet.time
+
     data = {
-        "Time": round(time.time(), 2),
+        "ID": packet[IP].id,
+        "IP_Version": packet[IP].version,
+        "Time": round(packet.time - start_time, 2) if start_time else 0,
         "Source": packet[IP].src,
         "Destination": packet[IP].dst,
         "Protocol": proto,
         "Length": len(packet),
         "Src_Port": src_port,
         "Dst_Port": dst_port,
-        "Size": len(packet)
+        "Size": len(packet),
+        "TTL": packet[IP].ttl,
+        "Checksum": packet[IP].chksum
     }
 
     captured_data.append(data)
@@ -53,6 +61,7 @@ def start_sniffing():
 
 
 def stop_sniffing():
-    global capturing
+    global capturing, start_time
     captured_data.clear()
+    start_time = None
     capturing = False
