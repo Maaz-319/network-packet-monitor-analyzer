@@ -134,6 +134,7 @@ th {
 
 tbody tr {
     background: var(--table-row);
+    cursor: pointer;
 }
 
 tbody tr:hover {
