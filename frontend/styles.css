@@ -112,7 +112,7 @@ input {
     background: var(--panel);
     border: 1px solid var(--border);
     padding: 10px;
-    margin-bottom: 12px;
+    /* margin-bottom: 12px; */
 }
 
 table {
