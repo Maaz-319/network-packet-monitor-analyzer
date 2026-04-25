@@ -23,7 +23,7 @@ body {
 
 .app-shell {
     width: 1200px;
-    margin: 20px auto 0 auto;
+    margin: 5px auto 0 auto;
 }
 
 .navbar {
@@ -73,6 +73,12 @@ body {
 
 .filters-bar {
     flex: 1;
+}
+
+.file-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 button,

@@ -38,6 +38,8 @@ const elements = {
   totalPackets: document.getElementById("totalPackets"),
   averagePacketSize: document.getElementById("averagePacketSize"),
   protocolStats: document.getElementById("protocolStats"),
+  saveFileBtn: document.getElementById("saveFileBtn"),
+  loadFileBtn: document.getElementById("loadFileBtn"),
 };
 
 function normalizePacket(packet) {
@@ -355,11 +357,74 @@ function toggleMode() {
   elements.modeButton.className = state.mode === "static" ? "mode-static" : "mode-live";
 }
 
+function saveFile() {
+  if (!state.packets.length) {
+    alert("No packets to save.");
+    return;
+  }
+    const blob = new Blob(
+        [JSON.stringify(state.packets, null, 2)],
+        { type: "application/json" }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "bcsf24m007_NTMA.json";
+    a.click();
+
+    URL.revokeObjectURL(url);
+}
+
+function loadFile() {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".json";
+
+    input.addEventListener("change", (event) => {
+        const file = event.target.files[0];
+        if (!file) {
+            return;
+        }
+
+        if (file.type !== "application/json") {
+            alert("Only Json files are allowed");
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (Array.isArray(data)) {
+                    state.packets = data.map(normalizePacket);
+                    state.selectedPacket = null;
+                    updateProtocolOptions();
+                    readFilters();
+                    applyCurrentFilters();
+                    setDetail(null);
+                } else {
+                    alert("Invalid file format: Expected an array of packets");
+                }
+            } catch (error) {
+                alert("Selected File has been corrupted");
+            }
+        };
+
+        reader.readAsText(file);
+    });
+
+    input.click();
+}
+
 elements.startBtn.addEventListener("click", handleStart);
 elements.stopBtn.addEventListener("click", handleStop);
 elements.applyFilterBtn.addEventListener("click", handleApplyFilter);
 elements.resetFilterBtn.addEventListener("click", handleResetFilter);
 elements.modeButton.addEventListener("click", toggleMode);
+elements.saveFileBtn.addEventListener("click", saveFile);
+elements.loadFileBtn.addEventListener("click", loadFile);
 
 setButtonState();
 renderTable();

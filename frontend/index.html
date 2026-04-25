@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Network Traffic Monitor</title>
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
   <div class="app-shell">
     <nav class="navbar">
@@ -27,6 +29,10 @@
         <input id="destinationIpFilter" type="text" placeholder="Destination IP">
         <button id="applyFilterBtn" type="button">Filter</button>
         <button id="resetFilterBtn" type="button">Reset / Clear Filter</button>
+      </div>
+      <div class="file-controls">
+        <button id="loadFileBtn">Load</button>
+        <button id="saveFileBtn">Save</button>
       </div>
     </section>
 
@@ -69,4 +75,5 @@
 
   <script src="script.js"></script>
 </body>
+
 </html>
