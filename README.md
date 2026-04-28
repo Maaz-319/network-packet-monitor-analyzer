@@ -1,48 +1,65 @@
-# NTMA - Network Traffic Monitor & Analyzer
+# **Network Packet Monitor & Analyzer (NTMA)**
 
-Lightweight network traffic monitor with a FastAPI backend and a static HTML/CSS/JavaScript frontend. It supports two views of packet data:
+This tool demonstrates capturing, parsing, and visualizing network packets.
 
-- Static capture, backed by seeded sample data in `backend/data/db.json`
-- Live capture, streamed from packet sniffing through Scapy
+- Backend: FastAPI application (serves static sample data and controls live capture)
+- Frontend: Single-file static UI (HTML/CSS/JS) that consumes the backend API
+- Packet capture: Uses Scapy for live sniffing; seeded JSON for static/demo data
 
-The UI shows a packet table, filter controls, a packet detail panel, and summary statistics for total packets, protocol counts, and average packet size.
+What this project does
+----------------------
 
-## Project layout
+NTMA provides two ways to inspect packet-level network data:
 
-```text
-backend/
-├── api
-│   ├── __init__.py
-│   └── routes.py
-├── core
-│   ├── __init__.py
-│   ├── live_capture.py
-│   ├── seed.py
-│   └── static_capture.py
-├── data
-│   ├── db.json
-│   └── live_db.json
-├── main.py
-├── model
-│   ├── __init__.py
-│   └── packet_parse.py
-└── requirements.txt
+- Static mode — returns a small seeded dataset stored at `backend/data/db.json`.
+- Live mode — starts Scapy-based packet sniffing and sends packets to the frontend.
 
-frontend/
-├── index.html
-├── script.js
-└── styles.css
+Directory structure
+------------------------
+```
+network-packet-monitor-analyzer/
+├── README.md
+├── .gitignore
+├── backend/
+│   ├── main.py              
+│   ├── requirements.txt
+│   ├── api/
+|   |   ├── __init__.py
+│   │   └── routes.py        
+│   ├── core/
+|   |   ├── __init__.py
+│   │   ├── live_capture.py  
+│   │   ├── static_capture.py
+│   │   └── seed.py          
+│   ├── data/
+│   │   └── db.json          
+│   └── model/
+|       ├── __init__.py
+│       └── packet_parse.py 
+└── frontend/
+    ├── index.html           
+    ├── style.css                
+    └── script.js    
+```            
+
+Quick start
+-----------
+
+Prerequisites
+- Python 3.8+ (3.10+ recommended)
+- `pip`
+- For live capture with Scapy: OS-level packet capture permissions (root/Administrator on many platforms)
+
+Windows:
+
+```powershell
+cd backend
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r requirements.txt
 ```
 
-### Requirements
-
-- Python 3.10 or newer
-- `pip`
-- Scapy-compatible packet capture permissions for live mode on your OS
-
-On Linux, live capture usually requires root privileges.
-
-### Install dependencies
+Linux (This project was developed on Ubuntu):
 
 ```bash
 cd backend
@@ -51,50 +68,55 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### Run the backend API
+Run the backend (development)
+
+The backend is a FastAPI app. From `backend/`:
 
 ```bash
-cd backend
-source .venv/bin/activate
 python main.py
-# or
-python3 main.py
 ```
 
-The API exposes these routes:
+Notes on permissions
+- Live capture uses Scapy which may require elevated privileges to open raw sockets. On Linux, run the backend with `sudo` if necessary. On Windows, run the terminal as Administrator.
 
-- `GET /` - health check
-- `GET /static` - return sample packets
-- `GET /start` - start live sniffing in the background
-- `GET /stop` - stop live sniffing
-- `GET /live?offset=0` - fetch live packets starting at an offset
+Backend API
+-----------
 
-### Open the frontend
+Available endpoints (`backend/api/routes.py`):
 
-Open `frontend/index.html` directly in your browser after the backend is running.
+- `GET /` — health check (returns {"success": true})
+- `GET /static` — returns seeded packet list from `backend/data/db.json`
+- `GET /start` — starts live sniffing in a background thread
+- `GET /stop` — stops live sniffing
+- `GET /live?offset=<n>` — returns live-captured packets starting at `offset`
 
-In the UI:
+Frontend usage
+--------------
 
-- Click **Start** in static mode to load sample packets from the backend
-- Click **Switch to Live Capture** to use the live packet stream
-- Click **Start** again in live mode to begin sniffing and loading live packets
-- Click **Stop** to stop live capture
+Open `frontend/index.html` in your browser while the backend is running. The UI supports two modes:
 
-## Example packet shape
+- Static: loads the seeded JSON from `backend/data/db.json` via `GET /static`.
+- Live: sends `GET /start`, polls `GET /live?offset=...` and displays new packets.
 
-Backend packet objects follow this shape:
+UI controls
+- Start / Stop — control capture and load packets
+- Mode toggle — switch between static and live modes
+- Filters — protocol, source IP, destination IP
+- Save / Load — export or import a JSON packet file from the browser
 
-```json
-{
-  "Time": 1.33,
-  "Source": "192.168.1.1",
-  "Destination": "192.168.1.2",
-  "Protocol": "TCP",
-  "Length": 100,
-  "Src_Port": 12345,
-  "Dst_Port": 80,
-  "Size": 100
-}
-```
+File notes
+---------------
 
-The table in the frontend shows only `Time`, `Source`, `Destination`, and `Protocol`. The detail panel shows the full packet record.
+- The backend entrypoint is `backend/main.py`.
+- Core capture logic is in `backend/core/live_capture.py` and `backend/core/static_capture.py`.
+- Sample data seeded by `backend/core/seed.py` and stored in `backend/data/db.json`.
+- Simple parser helper in `backend/model/packet_parse.py`.
+
+Dependencies
+- `backend/requirements.txt` (FastAPI, Uvicorn, Scapy).
+
+Files referenced
+- Backend entry: [backend/main.py](backend/main.py)
+- Seed data: [backend/data/db.json](backend/data/db.json)
+- API routes: [backend/api/routes.py](backend/api/routes.py)
+- Frontend: [frontend/index.html](frontend/index.html)
