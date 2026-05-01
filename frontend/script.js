@@ -64,6 +64,24 @@ function setButtonState() {
   elements.stopBtn.disabled = !state.running;
 }
 
+async function checkApiHealth() {
+  try {
+    const response = await fetch("http://localhost:8000/");
+    const label = document.getElementById("apiHealthLabel");
+    if (response.ok) {
+      label.textContent = "Online";
+      label.className = "api-health-online";
+    } else {
+      label.textContent = "Offline";
+      label.className = "api-health-offline";
+    }
+  } catch (error) {
+    const label = document.getElementById("apiHealthLabel");
+    label.textContent = "Offline";
+    label.className = "api-health-offline";
+  }
+}
+
 function setDetail(packet) {
   if (!packet) {
     elements.packetDetail.value = "Select a packet row to view full details.";
@@ -430,3 +448,4 @@ setButtonState();
 renderTable();
 renderStats();
 setDetail(null);
+checkApiHealth();
