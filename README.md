@@ -1,5 +1,7 @@
 # **Network Packet Monitor & Analyzer (NTMA)**
 
+Video demonstration: [YouTube Link](https://youtu.be/3g0HYzkaweA)
+
 This tool demonstrates capturing, parsing, and visualizing network packets.
 
 - Backend: FastAPI application (serves static sample data and controls live capture)
