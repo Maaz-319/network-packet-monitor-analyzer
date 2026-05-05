@@ -163,10 +163,36 @@ function renderStats() {
   });
 }
 
+function isIPv4(value) {
+  const parts = value.split(".");
+  if (parts.length !== 4) return false;
+
+  for (let part of parts) {
+    if (part === "" || isNaN(part)) return false;
+
+    const num = Number(part);
+    if (num < 0 || num > 255) return false;
+
+    if (part !== num.toString()) return false;
+  }
+
+  return true;
+}
+
 function getFilteredPackets() {
   const protocol = state.filters.protocol.trim().toLowerCase();
   const source = state.filters.source.trim().toLowerCase();
   const destination = state.filters.destination.trim().toLowerCase();
+
+  if (source && !isIPv4(source)) {
+    alert("Invalid source IP address format. Please enter a valid IPv4 address.");
+    return state.filteredPackets;
+  }
+
+  if (destination && !isIPv4(destination)) {
+    alert("Invalid destination IP address format. Please enter a valid IPv4 address.");
+    return state.filteredPackets;
+  }
 
   return state.packets.filter((packet) => {
     const protocolMatch = !protocol || String(packet.Protocol || "").toLowerCase() === protocol;
